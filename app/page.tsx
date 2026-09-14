@@ -1,57 +1,57 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import Card from "@/app/components/profile_card";
 import Navbar from "./components/navbar";
-import Card from "./components/profile_card";
 import BottomNav from "./components/bottom_bar";
+import { Profile } from "@/app/profile";
+import { supabase } from "./lib/supabaseClient";
 
-// Mock profiles data
-const PROFILES = [
-  {
-    id: 1,
-    profilePic: "/image 1.png",
-    userName: "Andrea Michael",
-    intent: "Seeking Co-Founder",
-  },
-  {
-    id: 2,
-    profilePic: "/image 1.png",
-    userName: "Maxwell Luthenburg",
-    intent: "Job Searching",
-  },
-  {
-    id: 3,
-    profilePic: "/image 1.png",
-    userName: "Alice Susan",
-    intent: "Hiring",
-  },
-  {
-    id: 4,
-    profilePic: "/image 1.png",
-    userName: "Omar Ali",
-    intent: "Looking for Investors",
-  },
-  {
-    id: 5,
-    profilePic: "/image 1.png",
-    userName: "Liam Wilson",
-    intent: "Job Searching",
-  },
-];
-
-export default function Page() {
+export default function Home() {
+  const [profiles, setProfiles] = useState<Profile[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchProfiles() {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, user_name, intent, profile_pic");
+
+      if (error) {
+        console.error("Error fetching profiles:", error.message);
+      } else if (data) {
+        const formattedProfiles: Profile[] = data.map((item) => ({
+          id: item.id,
+          userName: item.user_name,
+          intent: item.intent,
+          profilePic: item.profile_pic,
+        }));
+        setProfiles(formattedProfiles);
+      }
+      setLoading(false);
+    }
+
+    fetchProfiles();
+  }, []);
 
   const handleNext = () => {
     setCurrentIndex((prev) => prev + 1);
   };
 
-  const currentProfile = PROFILES[currentIndex];
+  const currentProfile = profiles[currentIndex];
+
+  if (loading) {
+    return (
+      <main className="flex min-h-screen items-center justify-center text-white">
+        <p>Loading profiles...</p>
+      </main>
+    );
+  }
 
   return (
-    <main className="min-h-screen bg-[#18171C]">
+    <main className="min-h-screen bg-[#1b1a21] p-4">
       <Navbar />
-
       {currentProfile ? (
         <Card
           profile={currentProfile}
@@ -59,18 +59,10 @@ export default function Page() {
           onConnect={handleNext}
         />
       ) : (
-        <div className="flex flex-col items-center justify-center h-135 mt-20 text-white">
-          <h2 className="text-2xl font-bold mb-2">No more profiles!</h2>
-          <p className="text-stone-400 mb-4">Check back later for new matches.</p>
-          <button
-            onClick={() => setCurrentIndex(0)}
-            className="px-4 py-2 bg-indigo-600 rounded-lg text-sm font-semibold hover:bg-indigo-500 transition-colors"
-          >
-            Reset Deck
-          </button>
+        <div className="mt-40 text-center text-xl font-semibold text-white">
+          No more profiles available!
         </div>
       )}
-
       <BottomNav />
     </main>
   );

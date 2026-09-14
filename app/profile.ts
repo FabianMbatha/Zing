@@ -1,8 +1,8 @@
 export interface Profile {
   id: number;
-  profilePic: string;
-  userName: string;
-  intent: string;
+  userName: string,
+  intent: string,
+  profilePic: string,
 }
 
 export const PROFILES: Profile[] = [
